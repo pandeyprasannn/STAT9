@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Players</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://iili.io/2LAfeEJ.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color:rgba(0, 0, 0, 0.74);
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+        .player-card {
+            background-color: #374151;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .player-card:hover {
+            transform: scale(1.05);
+        }
+        .player-photo {
+            width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        .player-name {
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .team-logo {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .placeholder-photo {
+            background-color: #4a5568;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img id="team-logo" src="" alt="Team Logo" class="team-logo">
+        <h1 id="team-name">Team Players</h1>
+    </div>
+    <div id="players-grid" class="players-grid">
+        <!-- Players will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Function to get URL parameter
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1]);
+        }
+
+        async function fetchTeamPlayers() {
+            const teamId = getUrlParameter('team_id');
+            
+            try {
+                const response = await fetch('https://pandeyprasannn.github.io/api/data.json');
+                const data = await response.json();
+
+                // Find the specific team
+                const team = data.teams.find(t => t.team_id == teamId);
+                
+                if (team) {
+                    // Set team logo and name
+                    document.getElementById('team-logo').src = team.team_logo_url;
+                    document.getElementById('team-name').textContent = `${team.team_name} Players`;
+
+                    // Find players for this team
+                    const playersGrid = document.getElementById('players-grid');
+                    playersGrid.innerHTML = ''; // Clear any existing players
+
+                    const teamPlayers = data.players.filter(p => p.team_id == teamId);
+
+                    teamPlayers.forEach(player => {
+                        const playerCard = document.createElement('div');
+                        playerCard.className = 'player-card';
+                        playerCard.dataset.playerId = player.player_id;
+                        playerCard.onclick = () => window.location.href = `player_profile.html?player_id=${player.player_id}`;
+
+                        // Create player photo
+                        const playerPhoto = document.createElement(player.player_image_url ? 'img' : 'div');
+                        if (player.player_image_url) {
+                            playerPhoto.src = player.player_image_url;
+                            playerPhoto.alt = player.player_name;
+                        } else {
+                            playerPhoto.textContent = player.player_name;
+                        }
+                        playerPhoto.className = player.player_image_url ? 'player-photo' : 'player-photo placeholder-photo';
+
+                        // Create player name
+                        const playerName = document.createElement('div');
+                        playerName.className = 'player-name';
+                        playerName.textContent = player.player_name;
+
+                        playerCard.appendChild(playerPhoto);
+                        playerCard.appendChild(playerName);
+                        playersGrid.appendChild(playerCard);
+                    });
+                } else {
+                    console.error('Team not found');
+                }
+            } catch (error) {
+                console.error('Error fetching team players:', error);
+            }
+        }
+
+        // Call the function when the page loads
+        fetchTeamPlayers();
+    </script>
+</body>
+</html>
